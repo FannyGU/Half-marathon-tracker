@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Half marathon training tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root{
+    --bg:#F7F5EF;
+    --card:#FFFFFF;
+    --ink:#1C231A;
+    --muted:#6B6F62;
+    --border:#E2DED2;
+    --accent:#E0552A;
+    --accent-dark:#A63C1C;
+    --done:#3F6B4F;
+    --done-bg:#E7F0E9;
+    --recovery:#B98A3E;
+    --recovery-bg:#FBF1DF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    padding:32px 20px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    color:var(--accent-dark);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Oswald', sans-serif;
+    font-weight:600;
+    font-size:32px;
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  .sub{color:var(--muted);font-size:14px;margin:0;}
+
+  .track{
+    margin:24px 0 8px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 20px;
+  }
+  .track-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+  .track-label{font-size:13px;color:var(--muted);}
+  .track-count{font-family:'JetBrains Mono', monospace;font-size:15px;font-weight:500;}
+  .lane{
+    position:relative;
+    height:14px;
+    background:repeating-linear-gradient(90deg,#EDEAE0 0,#EDEAE0 10px,#E4E0D3 10px,#E4E0D3 11px);
+    border-radius:7px;
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .lane-fill{
+    position:absolute;left:0;top:0;bottom:0;
+    background:var(--accent);
+    border-radius:7px 0 0 7px;
+    transition:width .3s ease;
+  }
+
+  details.phase{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    margin-top:16px;
+    overflow:hidden;
+  }
+  details.phase[open]{padding-bottom:6px;}
+  summary{
+    list-style:none;
+    cursor:pointer;
+    padding:16px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'Oswald', sans-serif;
+  }
+  summary::-webkit-details-marker{display:none;}
+  .phase-title{font-size:17px;text-transform:uppercase;letter-spacing:0.01em;font-weight:600;}
+  .phase-range{font-family:'JetBrains Mono', monospace;font-size:12px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;}
+  .phase-goal{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:var(--muted);
+    padding:0 20px 14px;
+    margin-top:-6px;
+  }
+  .chev{transition:transform .2s ease;color:var(--muted);font-size:13px;}
+  details[open] .chev{transform:rotate(90deg);}
+
+  .week{
+    border-top:1px solid var(--border);
+    padding:14px 20px 16px;
+  }
+  .week-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .cw-badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    font-weight:500;
+    background:var(--ink);
+    color:var(--bg);
+    padding:2px 8px;
+    border-radius:5px;
+  }
+  .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:2px 8px;
+    border-radius:5px;
+    background:var(--recovery-bg);
+    color:var(--recovery);
+  }
+
+  .session{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:6px 0;
+  }
+  .session-main{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    flex:1;
+    min-width:0;
+    cursor:pointer;
+  }
+  .session-note{
+    width:56px;
+    height:56px;
+    min-width:56px;
+    resize:none;
+    border:1.5px solid var(--border);
+    border-radius:6px;
+    background:var(--card);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    line-height:1.3;
+    padding:5px 6px;
+    transition:width .18s ease, height .18s ease;
+  }
+  .session-note::placeholder{color:#C6C2B4;}
+  .session-note:focus{
+    outline:none;
+    border-color:var(--accent-dark);
+    width:180px;
+    height:80px;
+    position:relative;
+    z-index:2;
+  }
+  .session input[type=checkbox]{
+    appearance:none;
+    -webkit-appearance:none;
+    width:19px;height:19px;
+    min-width:19px;
+    border:1.5px solid var(--border);
+    border-radius:5px;
+    margin-top:1px;
+    cursor:pointer;
+    position:relative;
+    background:var(--card);
+  }
+  .session input[type=checkbox]:checked{
+    background:var(--done);
+    border-color:var(--done);
+  }
+  .session input[type=checkbox]:checked::after{
+    content:'';
+    position:absolute;
+    left:6px;top:2px;
+    width:5px;height:9px;
+    border:solid white;
+    border-width:0 2px 2px 0;
+    transform:rotate(40deg);
+  }
+  .session-text{flex:1;}
+  .session-label{
+    font-size:14px;
+    font-weight:500;
+  }
+  .session-zone{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--accent-dark);
+    margin-left:6px;
+  }
+  .session-detail{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:1px;
+  }
+  .session.done .session-label,
+  .session.done .session-detail{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border);}
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:22px;
+  }
+  .footer-actions{
+    display:flex;
+    gap:8px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:7px 14px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  button:hover{border-color:var(--accent-dark);color:var(--accent-dark);}
+  .status{font-size:12px;color:var(--muted);font-family:'JetBrains Mono', monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">9-month plan · goal sub-2:00</p>
+    <h1>Half marathon tracker</h1>
+    <p class="sub">Target race pace ~5:40/km · tap a session to mark it done</p>
+  </header>
+
+  <div class="track">
+    <div class="track-top">
+      <span class="track-label">Overall progress</span>
+      <span class="track-count" id="overall-count">0 / 0</span>
+    </div>
+    <div class="lane"><div class="lane-fill" id="lane-fill" style="width:0%"></div></div>
+  </div>
+
+  <div id="phases"></div>
+
+  <div class="footer-row">
+    <span class="status" id="save-status">&nbsp;</span>
+    <div class="footer-actions">
+      <button id="export-btn">Export</button>
+      <button id="import-btn">Import</button>
+      <input type="file" id="import-file" accept="application/json" style="display:none;">
+      <button id="reset-btn">Reset all progress</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const PHASES = [
+  {
+    id:1,
+    title:'Phase 1 — base building',
+    goal:'Build aerobic engine and running consistency. All three runs Zone 2.',
+    weeks:[
+      {n:1, tag:null, s:[['Easy run 1','Zone 2','25 min'],['Easy run 2','Zone 2','25 min'],['Long run','Zone 2','5 km / ~35 min']]},
+      {n:2, tag:null, s:[['Easy run 1','Zone 2','25 min'],['Easy run 2','Zone 2','25 min'],['Long run','Zone 2','5.5 km / ~39 min']]},
+      {n:3, tag:null, s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','6 km / ~42 min']]},
+      {n:4, tag:'recovery', s:[['Easy run 1','Zone 2','25 min'],['Easy run 2','Zone 2','25 min'],['Long run','Zone 2','4.5 km / ~32 min']]},
+      {n:5, tag:null, s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','6.5 km / ~46 min']]},
+      {n:6, tag:null, s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','7 km / ~49 min']]},
+      {n:7, tag:null, s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','7.5 km / ~53 min']]},
+      {n:8, tag:'recovery', s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','5.5 km / ~39 min']]},
+      {n:9, tag:null, s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','8 km / ~56 min']]},
+      {n:10, tag:null, s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','8.5 km / ~60 min']]},
+      {n:11, tag:null, s:[['Easy run 1','Zone 2','40 min'],['Easy run 2','Zone 2','40 min'],['Long run','Zone 2','9 km / ~63 min']]},
+      {n:12, tag:'recovery', s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','7 km / ~49 min']]},
+      {n:13, tag:'bridge', s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','9.5 km / ~67 min']]},
+    ]
+  },
+  {
+    id:2,
+    title:'Phase 2 — build',
+    goal:'Add a weekly quality session, alternating tempo and Norwegian 4x4. Long run keeps growing.',
+    weeks:[
+      {n:14, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','10 km']]},
+      {n:15, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','10.5 km']]},
+      {n:16, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','18 min'],['Long run','Zone 2','11 km']]},
+      {n:17, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','8.5 km']]},
+      {n:18, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','20 min'],['Long run','Zone 2','11.5 km']]},
+      {n:19, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','12 km']]},
+      {n:20, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','20 min'],['Long run','Zone 2','12.5 km']]},
+      {n:21, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','9.5 km']]},
+      {n:22, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','22 min'],['Long run','Zone 2','13 km']]},
+      {n:23, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','13.5 km']]},
+      {n:24, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','22 min'],['Long run','Zone 2','14 km']]},
+      {n:25, tag:'recovery', s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','10.5 km']]},
+    ]
+  },
+  {
+    id:3,
+    title:'Phase 3 — race prep & taper',
+    goal:'Introduce race-pace work, peak the long run, then taper for a fresh race day.',
+    weeks:[
+      {n:26, tag:null, s:[['Easy run','Zone 2','45 min'],['Race-pace','Zone 3-4','3 x 2 km @ 5:40/km, 2 min jog rest'],['Long run','Zone 2','14.5 km']]},
+      {n:27, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','full'],['Long run','Zone 2','15 km']]},
+      {n:28, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','4 x 2 km @ 5:40/km, 2 min jog rest'],['Long run','Zone 2','15.5 km']]},
+      {n:29, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','11.5 km']]},
+      {n:30, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','5 x 1.5 km @ 5:40/km, 90s rest'],['Long run','Zone 2','16 km']]},
+      {n:31, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full'],['Long run','Zone 2','16.5 km']]},
+      {n:32, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','3 x 3 km @ 5:40/km, 2 min rest'],['Long run','Zone 2','17 km']]},
+      {n:33, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','13 km']]},
+      {n:34, tag:null, s:[['Easy run','Zone 2','45 min'],['Race-pace','Zone 3-4','6 km continuous @ 5:40/km'],['Long run','Zone 2','17.5 km']]},
+      {n:35, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','3 reps, easier'],['Long run','Zone 2','18 km (peak)']]},
+      {n:36, tag:'taper', s:[['Easy run','Zone 2','35 min'],['Race-pace','Zone 3-4','3 km @ 5:40/km'],['Long run','Zone 2','10 km']]},
+      {n:37, tag:'taper', s:[['Easy run','Zone 2','30 min'],['Strides','Zone 2','4 x 20 sec strides'],['Long run','Zone 2','6 km']]},
+      {n:38, tag:'taper', s:[['Easy run','Zone 2','25 min'],['Strides','Zone 2','3 x 20 sec strides'],['Long run','Zone 2','5 km']]},
+      {n:39, tag:'taper', s:[['Easy run','Zone 2','20 min'],['Shakeout','Zone 1-2','rest or very light'],['Long run','Zone 2','4 km']]},
+      {n:40, tag:'race week', s:[['Shakeout','Zone 1-2','15-20 min'],['Rest','—','hydrate, carb up'],['RACE DAY','—','21.1 km @ 5:40/km pace']]},
+    ]
+  }
+];
+
+function cwFor(n){
+  let cw = 32 + n;
+  if(cw > 52) cw -= 52;
+  return cw;
+}
+
+let progress = {};
+let notes = {};
+const STORAGE_KEY = 'half-marathon-progress';
+const NOTES_KEY = 'half-marathon-notes';
+
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) progress = JSON.parse(raw);
+  }catch(e){ progress = {}; }
+  try{
+    const rawNotes = localStorage.getItem(NOTES_KEY);
+    if(rawNotes) notes = JSON.parse(rawNotes);
+  }catch(e){ notes = {}; }
+}
+
+function saveProgress(){
+  const statusEl = document.getElementById('save-status');
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    statusEl.textContent = 'saved';
+    setTimeout(()=>{ if(statusEl.textContent==='saved') statusEl.textContent=''; }, 1200);
+  }catch(e){
+    statusEl.textContent = 'save failed';
+  }
+}
+
+function saveNotes(){
+  const statusEl = document.getElementById('save-status');
+  try{
+    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    statusEl.textContent = 'saved';
+    setTimeout(()=>{ if(statusEl.textContent==='saved') statusEl.textContent=''; }, 1200);
+  }catch(e){
+    statusEl.textContent = 'save failed';
+  }
+}
+
+function totalSessions(){
+  let t = 0;
+  PHASES.forEach(p => p.weeks.forEach(w => t += w.s.length));
+  return t;
+}
+
+function updateOverall(){
+  const total = totalSessions();
+  const done = Object.values(progress).filter(Boolean).length;
+  document.getElementById('overall-count').textContent = done + ' / ' + total;
+  document.getElementById('lane-fill').style.width = (total ? (done/total*100) : 0) + '%';
+}
+
+function render(){
+  const container = document.getElementById('phases');
+  container.innerHTML = '';
+  PHASES.forEach((phase, idx) => {
+    const details = document.createElement('details');
+    details.className = 'phase';
+    if(idx === 0) details.open = true;
+
+    const first = phase.weeks[0].n, last = phase.weeks[phase.weeks.length-1].n;
+    const summary = document.createElement('summary');
+    summary.innerHTML = `
+      <span class="phase-title">${phase.title} <span class="phase-range">cw${cwFor(first)}&ndash;cw${cwFor(last)}</span></span>
+      <span class="chev">&#9656;</span>
+    `;
+    details.appendChild(summary);
+
+    const goal = document.createElement('div');
+    goal.className = 'phase-goal';
+    goal.textContent = phase.goal;
+    details.appendChild(goal);
+
+    phase.weeks.forEach(week => {
+      const weekEl = document.createElement('div');
+      weekEl.className = 'week';
+
+      const head = document.createElement('div');
+      head.className = 'week-head';
+      head.innerHTML = `<span class="cw-badge">CW${cwFor(week.n)}</span>` +
+        (week.tag ? `<span class="tag">${week.tag}</span>` : '');
+      weekEl.appendChild(head);
+
+      week.s.forEach((sess, si) => {
+        const [label, zone, detail] = sess;
+        const sid = 'w' + week.n + 's' + si;
+        const row = document.createElement('div');
+        row.className = 'session' + (progress[sid] ? ' done' : '');
+
+        const main = document.createElement('label');
+        main.className = 'session-main';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = !!progress[sid];
+        cb.addEventListener('change', () => {
+          progress[sid] = cb.checked;
+          row.classList.toggle('done', cb.checked);
+          updateOverall();
+          saveProgress();
+        });
+
+        const text = document.createElement('div');
+        text.className = 'session-text';
+        text.innerHTML = `<span class="session-label">${label}</span>` +
+          (zone !== '—' ? `<span class="session-zone">${zone}</span>` : '') +
+          `<div class="session-detail">${detail}</div>`;
+
+        main.appendChild(cb);
+        main.appendChild(text);
+
+        const note = document.createElement('textarea');
+        note.className = 'session-note';
+        note.placeholder = 'note';
+        note.value = notes[sid] || '';
+        note.addEventListener('input', () => {
+          notes[sid] = note.value;
+          saveNotes();
+        });
+
+        row.appendChild(main);
+        row.appendChild(note);
+        weekEl.appendChild(row);
+      });
+
+      details.appendChild(weekEl);
+    });
+
+    container.appendChild(details);
+  });
+}
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if(!confirm('Reset all logged progress? This cannot be undone.')) return;
+  progress = {};
+  saveProgress();
+  render();
+  updateOverall();
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    progress: progress,
+    notes: notes
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `half-marathon-progress-${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data.progress && !data.notes) throw new Error('missing fields');
+      if(!confirm('Import this file? It will overwrite your current progress and notes on this device.')) {
+        e.target.value = '';
+        return;
+      }
+      progress = data.progress || {};
+      notes = data.notes || {};
+      saveProgress();
+      saveNotes();
+      render();
+      updateOverall();
+    }catch(err){
+      alert('That file could not be read as a valid progress export.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+(function init(){
+  loadProgress();
+  render();
+  updateOverall();
+})();
+</script>
+</body>
+</html>
