@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Half marathon training tracker</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap');
@@ -132,6 +133,13 @@
     background:var(--recovery-bg);
     color:var(--recovery);
   }
+  .tag.now{background:var(--accent);color:#fff;}
+  .week-dates{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .week.current{box-shadow:inset 3px 0 0 var(--accent);}
 
   .session{
     display:flex;
@@ -245,7 +253,7 @@
   <header>
     <p class="eyebrow">9-month plan · goal sub-2:00</p>
     <h1>Half marathon tracker</h1>
-    <p class="sub">Target race pace ~5:40/km · tap a session to mark it done</p>
+    <p class="sub">Race day Sat 22 May 2027 · target race pace ~5:40/km · tap a session to mark it done</p>
   </header>
 
   <div class="track">
@@ -271,11 +279,22 @@
 </div>
 
 <script>
+// Long run helper: Zone 2 at ~7:00/km
+function lr(km, extra){
+  const min = Math.round(km * 7);
+  const t = min < 90 ? `~${min} min` : `~${Math.floor(min/60)}:${String(min%60).padStart(2,'0')} h`;
+  return ['Long run','Zone 2', `${km} km / ${t}` + (extra ? ` · ${extra}` : '')];
+}
+const TEMPO = m => ['Tempo','Zone 3-4',`10 min warm-up, ${m} min tempo, 10 min cool-down`];
+const NOR_FULL = ['Norwegian 4x4','Zone 4-5','10 min warm-up, full 4 reps (4 min hard / 3 min jog), 5 min cool-down'];
+const NOR_3 = ['Norwegian 4x4','Zone 4-5','10 min warm-up, 3 reps only, 5 min cool-down'];
+const RP = d => ['Race-pace','Zone 3-4',`10 min warm-up, ${d}, 10 min cool-down`];
+
 const PHASES = [
   {
     id:1,
     title:'Phase 1 — base building',
-    goal:'Build aerobic engine and running consistency. All three runs Zone 2.',
+    goal:'Build aerobic engine and running consistency. All runs Zone 2. From CW44 the plan is two runs per week.',
     weeks:[
       {n:1, tag:null, s:[['Easy run 1','Zone 2','25 min'],['Easy run 2','Zone 2','25 min'],['Long run','Zone 2','5 km / ~35 min']]},
       {n:2, tag:null, s:[['Easy run 1','Zone 2','25 min'],['Easy run 2','Zone 2','25 min'],['Long run','Zone 2','5.5 km / ~39 min']]},
@@ -288,57 +307,87 @@ const PHASES = [
       {n:9, tag:null, s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','8 km / ~56 min']]},
       {n:10, tag:null, s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','8.5 km / ~60 min']]},
       {n:11, tag:null, s:[['Easy run 1','Zone 2','40 min'],['Easy run 2','Zone 2','40 min'],['Long run','Zone 2','9 km / ~63 min']]},
-      {n:12, tag:'recovery', s:[['Easy run 1','Zone 2','30 min'],['Easy run 2','Zone 2','30 min'],['Long run','Zone 2','7 km / ~49 min']]},
-      {n:13, tag:'bridge', s:[['Easy run 1','Zone 2','35 min'],['Easy run 2','Zone 2','35 min'],['Long run','Zone 2','9.5 km / ~67 min']]},
+      {n:12, tag:'recovery', s:[['Easy run','Zone 2','35 min'],['Long run','Zone 2','7 km / ~49 min']]},
     ]
   },
   {
     id:2,
-    title:'Phase 2 — build',
-    goal:'Add a weekly quality session, alternating tempo and Norwegian 4x4. Long run keeps growing.',
+    title:'Phase 2 — winter base',
+    goal:'Two runs a week: one quality run (alternating tempo and Norwegian 4x4) plus a long run held at 7–10 km. No need to go longer yet — consistency is the goal.',
     weeks:[
-      {n:14, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','10 km']]},
-      {n:15, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','10.5 km']]},
-      {n:16, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','18 min'],['Long run','Zone 2','11 km']]},
-      {n:17, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','8.5 km']]},
-      {n:18, tag:null, s:[['Easy run','Zone 2','45 min'],['Tempo','Zone 3-4','20 min'],['Long run','Zone 2','11.5 km']]},
-      {n:19, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','12 km']]},
-      {n:20, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','20 min'],['Long run','Zone 2','12.5 km']]},
-      {n:21, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','9.5 km']]},
-      {n:22, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','22 min'],['Long run','Zone 2','13 km']]},
-      {n:23, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full 4 reps'],['Long run','Zone 2','13.5 km']]},
-      {n:24, tag:null, s:[['Easy run','Zone 2','50 min'],['Tempo','Zone 3-4','22 min'],['Long run','Zone 2','14 km']]},
-      {n:25, tag:'recovery', s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','3 reps only'],['Long run','Zone 2','10.5 km']]},
+      {n:13, tag:null, s:[TEMPO(15), lr(8)]},
+      {n:14, tag:null, s:[NOR_FULL, lr(9)]},
+      {n:15, tag:null, s:[TEMPO(18), lr(10)]},
+      {n:16, tag:'recovery', s:[NOR_3, lr(7)]},
+      {n:17, tag:null, s:[TEMPO(20), lr(8)]},
+      {n:18, tag:null, s:[NOR_FULL, lr(9)]},
+      {n:19, tag:null, s:[TEMPO(20), lr(10)]},
+      {n:20, tag:'recovery', s:[NOR_3, lr(7)]},
+      {n:21, tag:null, s:[TEMPO(22), lr(8)]},
+      {n:22, tag:null, s:[NOR_FULL, lr(9)]},
+      {n:23, tag:null, s:[TEMPO(22), lr(10)]},
+      {n:24, tag:'recovery', s:[NOR_3, lr(7)]},
+      {n:25, tag:null, s:[TEMPO(25), lr(8)]},
+      {n:26, tag:null, s:[NOR_FULL, lr(9)]},
+      {n:27, tag:null, s:[TEMPO(25), lr(10)]},
+      {n:28, tag:'recovery', s:[NOR_3, lr(7)]},
     ]
   },
   {
     id:3,
-    title:'Phase 3 — race prep & taper',
-    goal:'Introduce race-pace work, peak the long run, then taper for a fresh race day.',
+    title:'Phase 3 — race build & taper',
+    goal:'The last 12 weeks: long run builds ~1 km per week from 10 km to a peak 3 weeks before the race, with race-pace work on the quality day. Then a 2-week taper.',
     weeks:[
-      {n:26, tag:null, s:[['Easy run','Zone 2','45 min'],['Race-pace','Zone 3-4','3 x 2 km @ 5:40/km, 2 min jog rest'],['Long run','Zone 2','14.5 km']]},
-      {n:27, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','full'],['Long run','Zone 2','15 km']]},
-      {n:28, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','4 x 2 km @ 5:40/km, 2 min jog rest'],['Long run','Zone 2','15.5 km']]},
-      {n:29, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','11.5 km']]},
-      {n:30, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','5 x 1.5 km @ 5:40/km, 90s rest'],['Long run','Zone 2','16 km']]},
-      {n:31, tag:null, s:[['Easy run','Zone 2','50 min'],['Norwegian 4x4','Zone 4-5','full'],['Long run','Zone 2','16.5 km']]},
-      {n:32, tag:null, s:[['Easy run','Zone 2','50 min'],['Race-pace','Zone 3-4','3 x 3 km @ 5:40/km, 2 min rest'],['Long run','Zone 2','17 km']]},
-      {n:33, tag:'recovery', s:[['Easy run','Zone 2','40 min'],['Tempo','Zone 3-4','15 min'],['Long run','Zone 2','13 km']]},
-      {n:34, tag:null, s:[['Easy run','Zone 2','45 min'],['Race-pace','Zone 3-4','6 km continuous @ 5:40/km'],['Long run','Zone 2','17.5 km']]},
-      {n:35, tag:null, s:[['Easy run','Zone 2','45 min'],['Norwegian 4x4','Zone 4-5','3 reps, easier'],['Long run','Zone 2','18 km (peak)']]},
-      {n:36, tag:'taper', s:[['Easy run','Zone 2','35 min'],['Race-pace','Zone 3-4','3 km @ 5:40/km'],['Long run','Zone 2','10 km']]},
-      {n:37, tag:'taper', s:[['Easy run','Zone 2','30 min'],['Strides','Zone 2','4 x 20 sec strides'],['Long run','Zone 2','6 km']]},
-      {n:38, tag:'taper', s:[['Easy run','Zone 2','25 min'],['Strides','Zone 2','3 x 20 sec strides'],['Long run','Zone 2','5 km']]},
-      {n:39, tag:'taper', s:[['Easy run','Zone 2','20 min'],['Shakeout','Zone 1-2','rest or very light'],['Long run','Zone 2','4 km']]},
-      {n:40, tag:'race week', s:[['Shakeout','Zone 1-2','15-20 min'],['Rest','—','hydrate, carb up'],['RACE DAY','—','21.1 km @ 5:40/km pace']]},
+      {n:29, tag:null, s:[RP('3 x 2 km @ 5:40/km (2 min jog rest)'), lr(10)]},
+      {n:30, tag:null, s:[NOR_FULL, lr(11)]},
+      {n:31, tag:null, s:[RP('4 x 2 km @ 5:40/km (2 min jog rest)'), lr(12)]},
+      {n:32, tag:'recovery', s:[TEMPO(15), lr(9)]},
+      {n:33, tag:null, s:[RP('5 x 1.5 km @ 5:40/km (90s rest)'), lr(13)]},
+      {n:34, tag:null, s:[NOR_FULL, lr(14)]},
+      {n:35, tag:null, s:[RP('3 x 3 km @ 5:40/km (2 min rest)'), lr(15)]},
+      {n:36, tag:'recovery', s:[TEMPO(15), lr(11)]},
+      {n:37, tag:null, s:[RP('6 km continuous @ 5:40/km'), lr(16)]},
+      {n:38, tag:'peak', s:[['Norwegian 4x4','Zone 4-5','10 min warm-up, 3 reps (easier), 5 min cool-down'],['Long run','Zone 2','16–18 km / ~1:52–2:06 h (peak) · go to 18 km only if you have added a third easy run']]},
+      {n:39, tag:'taper', s:[RP('3 km @ 5:40/km'), lr(13)]},
+      {n:40, tag:'taper', s:[['Easy run + strides','Zone 2','25 min + 4 x 20 sec strides'], lr(9)]},
+      {n:41, tag:'race week', s:[['Shakeout','Zone 1-2','15-20 min early in the week, hydrate and carb up'],['RACE DAY','—','Sat 22 May · 21.1 km @ 5:40/km pace']]},
     ]
   }
 ];
 
-function cwFor(n){
-  let cw = 32 + n;
-  if(cw > 52) cw -= 52;
-  return cw;
+// Week 1 starts Monday 10 Aug 2026 (ISO week 33). Labels use real ISO weeks,
+// so 2026's 53rd week and the year change are handled correctly.
+const PLAN_START = new Date(2026, 7, 10);
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function weekStart(n){
+  const d = new Date(PLAN_START);
+  d.setDate(d.getDate() + 7 * (n - 1));
+  return d;
+}
+
+function isoWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+function cwFor(n){ return isoWeek(weekStart(n)); }
+
+function dateRange(n){
+  const a = weekStart(n);
+  const b = new Date(a); b.setDate(b.getDate() + 6);
+  const fmt = d => d.getDate() + ' ' + MONTHS[d.getMonth()];
+  return fmt(a) + ' – ' + fmt(b);
+}
+
+function isCurrentWeek(n){
+  const now = new Date();
+  const a = weekStart(n);
+  const b = new Date(a); b.setDate(b.getDate() + 7);
+  return now >= a && now < b;
 }
 
 let progress = {};
@@ -357,26 +406,24 @@ function loadProgress(){
   }catch(e){ notes = {}; }
 }
 
-function saveProgress(){
+function flashSaved(ok){
   const statusEl = document.getElementById('save-status');
+  statusEl.textContent = ok ? 'saved' : 'save failed';
+  if(ok) setTimeout(()=>{ if(statusEl.textContent==='saved') statusEl.textContent=''; }, 1200);
+}
+
+function saveProgress(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    statusEl.textContent = 'saved';
-    setTimeout(()=>{ if(statusEl.textContent==='saved') statusEl.textContent=''; }, 1200);
-  }catch(e){
-    statusEl.textContent = 'save failed';
-  }
+    flashSaved(true);
+  }catch(e){ flashSaved(false); }
 }
 
 function saveNotes(){
-  const statusEl = document.getElementById('save-status');
   try{
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    statusEl.textContent = 'saved';
-    setTimeout(()=>{ if(statusEl.textContent==='saved') statusEl.textContent=''; }, 1200);
-  }catch(e){
-    statusEl.textContent = 'save failed';
-  }
+    flashSaved(true);
+  }catch(e){ flashSaved(false); }
 }
 
 function totalSessions(){
@@ -385,9 +432,16 @@ function totalSessions(){
   return t;
 }
 
+function validSessionIds(){
+  const ids = new Set();
+  PHASES.forEach(p => p.weeks.forEach(w => w.s.forEach((_, si) => ids.add('w' + w.n + 's' + si))));
+  return ids;
+}
+
 function updateOverall(){
   const total = totalSessions();
-  const done = Object.values(progress).filter(Boolean).length;
+  const valid = validSessionIds();
+  const done = Object.keys(progress).filter(k => progress[k] && valid.has(k)).length;
   document.getElementById('overall-count').textContent = done + ' / ' + total;
   document.getElementById('lane-fill').style.width = (total ? (done/total*100) : 0) + '%';
 }
@@ -398,7 +452,9 @@ function render(){
   PHASES.forEach((phase, idx) => {
     const details = document.createElement('details');
     details.className = 'phase';
-    if(idx === 0) details.open = true;
+    const hasCurrent = phase.weeks.some(w => isCurrentWeek(w.n));
+    const anyCurrent = PHASES.some(p => p.weeks.some(w => isCurrentWeek(w.n)));
+    if(hasCurrent || (!anyCurrent && idx === 0)) details.open = true;
 
     const first = phase.weeks[0].n, last = phase.weeks[phase.weeks.length-1].n;
     const summary = document.createElement('summary');
@@ -415,11 +471,14 @@ function render(){
 
     phase.weeks.forEach(week => {
       const weekEl = document.createElement('div');
-      weekEl.className = 'week';
+      const current = isCurrentWeek(week.n);
+      weekEl.className = 'week' + (current ? ' current' : '');
 
       const head = document.createElement('div');
       head.className = 'week-head';
       head.innerHTML = `<span class="cw-badge">CW${cwFor(week.n)}</span>` +
+        `<span class="week-dates">${dateRange(week.n)}</span>` +
+        (current ? `<span class="tag now">this week</span>` : '') +
         (week.tag ? `<span class="tag">${week.tag}</span>` : '');
       weekEl.appendChild(head);
 
